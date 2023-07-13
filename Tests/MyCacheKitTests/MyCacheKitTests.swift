@@ -1,7 +1,7 @@
 import XCTest
-@testable import CacheKit
+@testable import MyCacheKit
 
-final class CacheKitTests: XCTestCase {
+final class MyCacheKitTests: XCTestCase {
         
     func testInsertData() throws {
         let cache = Cache<String, Data>.init()
