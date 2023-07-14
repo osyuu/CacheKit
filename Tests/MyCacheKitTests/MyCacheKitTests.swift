@@ -4,6 +4,7 @@ import XCTest
 final class MyCacheKitTests: XCTestCase {
         
     func testInsertData() throws {
+        
         let cache = Cache<String, Data>.init()
         
         cache.insert(Data(), forKey: "empty")

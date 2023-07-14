@@ -7,20 +7,20 @@
 
 import Foundation
 
-final class Cache<Key: Hashable, Value> {
+public final class Cache<Key: Hashable, Value: Codable> {
     private let wrapped = NSCache<WrappedKey, Entry>()
     private let dateProvider: () -> Date
     private let entryLifetime: TimeInterval
     private let keyTracker = KeyTracker()
     
-    init(dateProvider: @escaping () -> Date = Date.init, entryLifetime: TimeInterval = 12 * 60 * 60, maximumEntryCount: Int = 50) {
+    public init(dateProvider: @escaping () -> Date = Date.init, entryLifetime: TimeInterval = 12 * 60 * 60, maximumEntryCount: Int = 50) {
         self.dateProvider = dateProvider
         self.entryLifetime = entryLifetime
         wrapped.countLimit = maximumEntryCount
         wrapped.delegate = keyTracker
     }
     
-    func insert(_ value: Value, forKey key: Key) {
+    public func insert(_ value: Value, forKey key: Key) {
         let date = dateProvider().addingTimeInterval(entryLifetime)
         let entry = Entry(key: key, value: value, expirationDate: date)
         let wrappedKey = WrappedKey(key)
@@ -28,7 +28,7 @@ final class Cache<Key: Hashable, Value> {
         keyTracker.keys.insert(key)
     }
     
-    func value(forKey key: Key) -> Value? {
+    public func value(forKey key: Key) -> Value? {
         guard let entry = wrapped.object(forKey: WrappedKey(key)) else {
             return nil
         }
@@ -41,7 +41,7 @@ final class Cache<Key: Hashable, Value> {
         return entry.value
     }
     
-    func remove(forKey key: Key) {
+    public func remove(forKey key: Key) {
         let wrappedKey = WrappedKey(key)
         wrapped.removeObject(forKey: wrappedKey)
     }
@@ -91,7 +91,7 @@ private extension Cache {
 }
 
 extension Cache {
-    subscript(key: Key) -> Value? {
+    public subscript(key: Key) -> Value? {
         get {
             return value(forKey: key)
         }
@@ -130,21 +130,19 @@ private extension Cache {
 }
 
 extension Cache: Codable where Key: Codable, Value: Codable {
-    convenience init(from decoder: Decoder) throws {
+    convenience public init(from decoder: Decoder) throws {
         self.init()
         let container = try decoder.singleValueContainer()
         let entries = try container.decode([Entry].self)
         entries.forEach(insert)
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(keyTracker.keys.compactMap(entry))
     }
-}
-
-extension Cache where Key: Codable, Value: Codable {
-    func saveToDisk(
+    
+    public func saveToDisk(
         withName name: String,
         using fileManager: FileManager = .default
     ) throws {
